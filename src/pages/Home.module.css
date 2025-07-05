@@ -1,0 +1,216 @@
+.homePage {
+    padding: 3rem 6rem;
+    text-align: center;
+    background: rgb(238, 202, 202);
+    min-height: 80vh;
+    margin: auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .home, .servicesContainer, .contactSection {
+    background: #f0d6d6;
+    margin: auto;
+    padding: 2rem;
+  }
+
+  .about {
+    background: #ddd1d1;
+    margin: auto;
+    padding: 2rem;
+  }
+
+  .tour {
+    margin: auto;
+    padding: 2rem;
+  }
+  
+  .welcomeText {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #1d3557;
+    margin-bottom: 1rem;
+  }
+  
+  .tagline {
+    font-size: 1.5rem;
+    color: #495057;
+    margin-bottom: 2rem;
+  }
+
+  .tag {
+    font-size: 1.5rem;
+    color: #495057;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  .startButton {
+    background-color: #1d3557;
+    color: #fff;
+    padding: 1rem 2rem;
+    margin-right: 2rem;
+    border: none;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .startButton:hover {
+    background-color: #457b9d;
+  }
+  
+  .contactForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    color: #495057;
+  }
+  
+  .contactForm label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  
+  .contactForm input,
+  .contactForm textarea {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    margin-top: 0.25rem;
+  }
+  
+  .contactForm button {
+    padding: 0.75rem;
+    background-color: #1d3557;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  .contactForm button:hover {
+    background-color: #7d8e9b;
+  }
+
+  .servicesContainer {
+    padding: 2rem;
+    background-color: #f0d6d6;
+    text-align: center;
+  }
+  
+  .servicesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .serviceCard {
+    background-color: rgb(238, 202, 202);
+    color: #495057;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    text-align: left;
+    padding: 1rem;
+    transition: transform 0.3s;
+  }
+  
+  .serviceCard:hover {
+    transform: translateY(-5px);
+  }
+  
+  .serviceCard h3 {
+    background-color: #1d3557;
+    color: white;
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1rem;
+    font-size: 1.1rem;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  
+  .serviceCard ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+  }
+  
+  .serviceCard li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+@media (max-width: 768px) {
+  .homePage {
+    padding: 2rem 3rem;
+  }
+
+  .welcomeText {
+    font-size: 2.2rem;
+  }
+
+  .tagline,
+  .tag {
+    font-size: 1.2rem;
+  }
+
+  .startButton {
+    width: 100%;
+    margin-bottom: 1rem;
+    margin-right: 0;
+  }
+
+  .contactForm {
+    max-width: 90%;
+  }
+
+  .servicesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .homePage {
+    padding: 1.5rem 1rem;
+  }
+
+  .welcomeText {
+    font-size: 1.8rem;
+  }
+
+  .tagline,
+  .tag {
+    font-size: 1rem;
+  }
+
+  .contactForm label {
+    font-size: 0.95rem;
+  }
+
+  .contactForm input,
+  .contactForm textarea {
+    font-size: 0.9rem;
+  }
+
+  .serviceCard h3 {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+
+  .serviceCard li {
+    font-size: 0.9rem;
+  }
+
+  .startButton {
+    font-size: 0.95rem;
+    padding: 0.75rem 1.5rem;
+  }
+}

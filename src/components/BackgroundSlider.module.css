@@ -1,0 +1,59 @@
+.sliderContainer {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    overflow: hidden;
+    z-index: 0;
+    border-radius: 3%;
+  }
+  
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+  
+  .activeSlide {
+    opacity: 1;
+    z-index: -1;
+  }
+  
+  /* ✅ Media Queries for Responsive Design */
+  @media screen and (max-width: 1024px) {
+    .sliderContainer {
+      height: 60vh;
+    }
+  
+    .slide {
+      height: 60vh;
+    }
+  }
+  
+  @media screen and (max-width: 768px) {
+    .sliderContainer {
+      height: 50vh;
+      border-radius: 2%;
+    }
+  
+    .slide {
+      height: 50vh;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .sliderContainer {
+      height: 40vh;
+      border-radius: 1%;
+    }
+  
+    .slide {
+      height: 40vh;
+    }
+  }
+  

@@ -1,0 +1,290 @@
+.dashboardContainer {
+  padding: 2rem;
+  background-color: #e9d5d5;
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  margin: auto;
+}
+
+.welcomeText {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #1d3557;
+  margin-bottom: 1rem;
+}
+
+.tag {
+  font-size: 1.5rem;
+  color: #495057;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.card {
+  background: #e9bbbb;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin: 1rem 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 1.75rem;
+  color: #1d3557;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #457b9d;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.gridContainer {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+  border: 1px solid #1a1919;
+  margin-top: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gridRow, .headerRow {
+  display: flex;
+  min-width: max-content;
+}
+
+.headerCell, .gridCell, .dayLabel {
+  flex-shrink: 0;
+  width: 70px;
+  height: 50px;
+  border: 1px solid #ccc;
+  text-align: center;
+  line-height: 50px;
+  font-size: 14px;
+  background-color: #dab5b5;
+}
+
+.dayLabel {
+  width: 100px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ccacac;
+  border: 1px solid #ccc;
+}
+
+.gridCell input[type="checkbox"] {
+  pointer-events: none;
+}
+
+.gridCellSelected {
+  background-color: red;
+}
+
+.gridCellPaid {
+  background-color: green;
+  color: white;
+}
+
+.cashedOut {
+  background-color: #c25b5b !important;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.cashoutBanner {
+  background-color: #e0ffe0;
+  padding: 12px;
+  border: 1px solid #8bc34a;
+  margin: 10px 0;
+  border-radius: 5px;
+  color: black;
+}
+
+.locked {
+  background-color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.dashboardButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.dashboardButtons button {
+  padding: 10px 16px;
+  background-color: #1d3557;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  font-size: 1.1rem;
+}
+
+.dashboardButtons button:hover {
+  transform: scale(1.05);
+}
+
+.unavailableMessage {
+  margin-top: 10px;
+  padding: 10px;
+  color: #fff;
+  background-color: #e63946;
+  border-radius: 8px;
+  animation: fadeOut 30s ease-in-out forwards;
+  font-weight: bold;
+  text-align: center;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; transform: scale(1); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+
+input[type="number"],
+select {
+  padding: 0.7rem;
+  font-size: 1.1rem;
+  margin: 1rem 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 300px;
+}
+
+select {
+  background-color: #1a1919;
+  color: white;
+}
+
+.primaryBtn {
+  background-color: rgb(190, 136, 136);
+  color: black;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.primaryBtn:hover {
+  background-color: #1D3557;
+  color: white;
+}
+
+.primaryBtn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  color: #666;
+}
+
+/* Tablets */
+@media screen and (max-width: 1024px) {
+  .dashboardContainer {
+    padding: 1.5rem;
+  }
+
+  .welcomeText {
+    font-size: 2.5rem;
+  }
+
+  .stats {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+}
+
+/* Mobile Focused */
+@media screen and (max-width: 600px) {
+  .dashboardContainer {
+    padding: 1rem;
+  }
+
+  .welcomeText {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .tag {
+    font-size: 1.3rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .gridContainer {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .headerCell,
+  .gridCell,
+  .dayLabel {
+    font-size: 14px;
+    width: 70px;
+    height: 50px;
+  }
+
+  .dashboardButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dashboardButtons button {
+    width: 100%;
+    max-width: 280px;
+    font-size: 1.1rem;
+  }
+
+  .unavailableMessage {
+    font-size: 1rem;
+    padding: 10px;
+  }
+
+  input[type="number"],
+  select {
+    font-size: 1rem;
+    max-width: 100%;
+  }
+
+  .primaryBtn {
+    width: 100%;
+    max-width: 280px;
+    font-size: 1.1rem;
+  }
+}
