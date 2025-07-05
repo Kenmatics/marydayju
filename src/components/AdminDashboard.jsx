@@ -247,20 +247,20 @@ function AdminDashboard() {
 
               <div className={styles.adminUserGrid}>
                 <h4>Contribution Grid</h4>
-                <button onClick={() => setShowGrid(true)} aria-label="View Contribution Grid">View Contribution Grid</button>
+                <button className={styles.primaryBtn} onClick={() => setShowGrid(true)} aria-label="View Contribution Grid">View Contribution Grid</button>
               </div>
 
               {showGrid && <ContributionGridModal onClose={() => setShowGrid(false)} />}
 
-              <div className={styles.actionButton}>
-                <button onClick={handleConfirmPayment} disabled={loading} aria-label="Confirm Payment">Confirm Payment</button>
-                <button onClick={handleCashout} disabled={loading} aria-label="Cashout">Cashout</button>
-                <button onClick={handleResetUser} disabled={loading} aria-label="Reset User">Reset User</button>
-                <button onClick={handleDeleteUser} disabled={loading} aria-label="Delete User">Delete User</button>
+              <div className={styles.actionButtons}>
+                <button className={styles.primaryBtn} onClick={handleConfirmPayment} disabled={loading} aria-label="Confirm Payment">Confirm Payment</button>
+                <button className={styles.primaryBtn} onClick={handleCashout} disabled={loading} aria-label="Cashout">Cashout</button>
+                <button className={styles.primaryBtn} onClick={handleResetUser} disabled={loading} aria-label="Reset User">Reset User</button>
+                <button className={styles.primaryBtn} onClick={handleDeleteUser} disabled={loading} aria-label="Delete User">Delete User</button>
               </div>
 
               <div className={styles.dashboardSections}>
-                <button onClick={handleDownloadReport} aria-label="Download Excel Report">Download Monthly Report (Excel)</button>
+                <button className={styles.primaryBtn} onClick={handleDownloadReport} aria-label="Download Excel Report">Download Monthly Report (Excel)</button>
                 <button
                   onClick={() => {
                     const confirmed = window.confirm("Are you sure you want to log out?");
