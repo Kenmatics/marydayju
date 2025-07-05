@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './HeaderHome.module.css';
+import logo from '../assets/maryday-banner.jpg';
 
 function HeaderContribution({
   loggedIn = false,
@@ -16,7 +17,7 @@ function HeaderContribution({
 
   return (
     <header className={styles.header}>
-      <img src="/src/assets/maryday-banner.jpg" alt="MarydayJu Logo" className={styles.logo} />
+      <img src={logo} alt="MarydayJu Logo" className={styles.logo} />
       
       <div className={styles.navContainer}>
         <div className={styles.menuToggle} onClick={() => setMenuOpen(!menuOpen)}>

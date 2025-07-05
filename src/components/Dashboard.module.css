@@ -64,12 +64,23 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.gridContainer::-webkit-scrollbar {
+  height: 6px;
+}
+.gridContainer::-webkit-scrollbar-thumb {
+  background-color: #999;
+  border-radius: 10px;
+}
+
 .gridRow, .headerRow {
   display: flex;
   min-width: max-content;
+  gap: 0; 
+  margin: 0;
+  padding: 0;
 }
 
-.headerCell, .gridCell, .dayLabel {
+.headerCell, .gridCell {
   flex-shrink: 0;
   width: 70px;
   height: 50px;
@@ -78,6 +89,9 @@
   line-height: 50px;
   font-size: 14px;
   background-color: #dab5b5;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .dayLabel {
@@ -88,6 +102,8 @@
   justify-content: center;
   background-color: #ccacac;
   border: 1px solid #ccc;
+  margin: 0; 
+  padding: 0; 
 }
 
 .gridCell input[type="checkbox"] {

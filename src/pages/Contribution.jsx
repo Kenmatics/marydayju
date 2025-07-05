@@ -62,7 +62,7 @@ function Contribution() {
       <main className={styles.homePage}>
           <section className={styles.home}>
             <h1 className={styles.welcomeText}>Welcome to MaryDayJu Enterprise</h1>
-            <p className={styles.tagline}>Your trusted partner in excellence.</p>            
+            <p className={styles.tagline}>Your Trusted Partner in Excellence.</p>            
           </section>
         {view === 'landing' && (
           <section className={styles.home}>

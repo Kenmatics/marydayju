@@ -127,75 +127,105 @@ function Dashboard({ onLogout, userName, userId }) {
   };
 
   const handlePaystackPayment = () => {
-    const totalAmount = calculateTotal() * 100;
+  const totalAmount = calculateTotal() * 100;
 
-    if (!totalAmount) return alert("Please select contributions to pay for.");
-    if (!window.PaystackPop?.setup) {
-      alert("⚠️ Paystack script is not loaded.");
-      return;
+  if (!totalAmount) return alert("Please select contributions to pay for.");
+  if (!window.PaystackPop?.setup) {
+    alert("⚠️ Paystack script is not loaded.");
+    return;
+  }
+
+  const safeEmail = userName?.trim()
+    ? `${userName.trim().replace(/\s+/g, '').toLowerCase()}@marydayju.com`
+    : `guest${Date.now()}@marydayju.com`;
+
+  const reference = `${selectedPackage}-${Date.now()}`;
+
+  const handler = window.PaystackPop.setup({
+    key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+    email: safeEmail,
+    amount: totalAmount,
+    ref: reference,
+    currency: "NGN",
+    metadata: {
+      custom_fields: [
+        {
+          display_name: "Contributor Name",
+          variable_name: "contributor_name",
+          value: userName || 'Anonymous',
+        },
+      ],
+    },
+    callback: function (response) {
+      console.log("Payment complete:", response);
+      verifyAndSavePayment(response, reference);
+    },
+    onClose: function () {
+      alert("Transaction was cancelled.");
     }
+  });
 
-    const safeEmail = userName?.trim()
-      ? `${userName.trim().replace(/\s+/g, '').toLowerCase()}@marydayju.com`
-      : `guest${Date.now()}@marydayju.com`;
+  handler.openIframe();
+};
 
-      const handler = window.PaystackPop.setup({
-        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-        email: safeEmail,
-        amount: totalAmount,
-        ref: `${selectedPackage}-${Date.now()}`,
-        currency: "NGN",
-        metadata: {
-          custom_fields: [
-            {
-              display_name: "Contributor Name",
-              variable_name: "contributor_name",
-              value: userName || 'Anonymous',
-            },
-          ],
-        },
-        callback: function (response) {
-          console.log("Payment complete:", response);
-        
-          const newPaidDays = { ...paidDays };
-          const selectedGrid = [];
-        
-          Object.entries(checkedDays).forEach(([key, value], index) => {
-            if (value && key.startsWith(selectedPackage)) {
-              newPaidDays[key] = true;
-              selectedGrid[index] = true;
-            } else {
-              selectedGrid[index] = selectedGrid[index] || false;
-            }
-          });
-    
-          setPaidDays(newPaidDays);
-          const userRef = doc(db, 'users', userId);
-          const newlyPaidCount = Object.entries(checkedDays).filter(
-            ([key, value]) => value && key.startsWith(selectedPackage) && !paidDays[key]
-          ).length;
-          
-          const newAmount = amountContributed + (newlyPaidCount * Number(contributionAmount));
-          
-          updateDoc(userRef, {
-            paidDays: newPaidDays,
-            amountContributed: newAmount,
-            selectedGrid: selectedGrid,
-          })
-            .then(() => {
-              setPaidDays(newPaidDays);
-              setAmountContributed(newAmount);
-              alert("✅ Payment successful!");
-            })
-            .catch(err => console.error("Error updating paid days:", err));        
-        },
-        onClose: function () {
-          alert("Transaction was cancelled.");
+const verifyAndSavePayment = async (response, reference) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+
+    // Save the reference before verification
+    await updateDoc(userRef, { lastRef: reference });
+
+    const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${response.reference}`, {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const verifyData = await verifyRes.json();
+
+    if (verifyData.status && verifyData.data.status === "success") {
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.data();
+
+      const newPaidDays = { ...userData.paidDays };
+      const selectedGrid = [];
+      const checked = userData.checkedDays || {};
+      const newlyPaid = {};
+
+      Object.entries(checked).forEach(([key, value], index) => {
+        if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
+          newPaidDays[key] = true;
+          newlyPaid[key] = true;
+          selectedGrid[index] = true;
+        } else {
+          selectedGrid[index] = selectedGrid[index] || false;
         }
       });
-    
-      handler.openIframe();
-    };  
+
+      const contributionAmount = Number(userData.contributionAmount || 0);
+      const totalPaid = Object.keys(newlyPaid).length * contributionAmount;
+
+      await updateDoc(userRef, {
+        paidDays: newPaidDays,
+        amountContributed: (userData.amountContributed || 0) + totalPaid,
+        selectedGrid,
+        lastRef: reference,
+      });
+
+      setPaidDays(newPaidDays);
+      setAmountContributed((userData.amountContributed || 0) + totalPaid);
+      alert("✅ Payment verified and saved!");
+    } else {
+      alert("❌ Payment verification failed. Please contact support.");
+      console.error("Verification error:", verifyData.message);
+    }
+  } catch (err) {
+    console.error("❌ Error verifying Paystack payment:", err);
+    alert("❌ An error occurred during payment verification.");
+  }
+};
+
 
   useEffect(() => {
     const updateTotal = async () => {
@@ -223,7 +253,7 @@ function Dashboard({ onLogout, userName, userId }) {
           <p className={styles.tag}>Total to Pay: ₦{calculateTotal()}</p>
           <div className={styles.gridContainer}>
             <div className={styles.headerRow}>
-              <div className={styles.dayLabel}>Day ↓ / Month →</div>
+              <div className={styles.dayLabel}>Month → Day ↓</div>
               {months.map(month => <div key={month} className={styles.headerCell}>{month}</div>)}
             </div>
             {days.map(day => (
