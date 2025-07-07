@@ -95,7 +95,7 @@ function Dashboard({ onLogout, userName, userId }) {
 
   const handleCheckboxChange = async (month, label) => {
     const key = `${selectedPackage}-${month}${label ? '-' + label : ''}`;
-    if (cashedOut || lockedGrids[key]) return;
+    if (cashedOut || lockedGrids[key] || paidDays[key]) return;
 
     const updated = { ...checkedDays, [key]: !checkedDays[key] };
     setCheckedDays(updated);

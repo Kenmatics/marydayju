@@ -134,11 +134,11 @@
   color: black;
 }
 
-.locked {
-  background-color: #ccc;
-  cursor: not-allowed;
+.locked, .paid {
   pointer-events: none;
+  background-color: #ccc;
   opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .dashboardButtons {
