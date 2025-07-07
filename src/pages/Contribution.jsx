@@ -67,7 +67,7 @@ function Contribution() {
         {view === 'landing' && (
           <section className={styles.home}>
           <h2 className={styles.welcomeText}>How Contribution Works</h2>
-          <p className={styles.tagline}>Join our daily, weekly, or monthly thrift plans and grow your savings effectively.</p>
+          <p className={styles.tagline}>Join our Daily, Weekly, Monthly or Yearly thrift plans and grow your savings effectively.</p>
           <div className="auth-buttons">
                 <button className={styles.startButton} onClick={() => setView('login')}>Login</button>
                 <button className={styles.startButton} onClick={() => setView('register')}>Register</button>
