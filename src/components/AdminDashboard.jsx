@@ -210,6 +210,14 @@ function AdminDashboard() {
     </div>
   );
 
+  const formatCurrency = (value) =>
+  new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+  }).format(value || 0);
+
+
   return (
     <div className={styles.adminDashboard}>
       <p className={styles.welcome}>Welcome Admin!</p>
@@ -242,8 +250,8 @@ function AdminDashboard() {
             <>
               <h3 className={styles.tag}>User Details</h3>
               <p className={styles.tag}><strong>Package:</strong> {selectedUserData.selectedPackage}</p>
-              <p className={styles.tag}><strong>Amount Contributed:</strong> ₦{selectedUserData.amountContributed}</p>
-              <p className={styles.tag}><strong>Contribution Amount:</strong> ₦{selectedUserData.contributionAmount}</p>
+              <p className={styles.tag}><strong>Amount Contributed:</strong> {formatCurrency(selectedUserData.amountContributed)}</p>
+              <p className={styles.tag}><strong>Contribution Amount:</strong> {formatCurrency(selectedUserData.contributionAmount)}</p>
 
               <div className={styles.adminUserGrid}>
                 <h4>Contribution Grid</h4>
