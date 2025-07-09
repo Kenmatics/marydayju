@@ -175,12 +175,14 @@ const verifyAndSavePayment = async (response, reference) => {
     // Save the reference before verification
     await updateDoc(userRef, { lastRef: reference });
 
-    const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${response.reference}`, {
-      headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_PAYSTACK_SECRET_KEY}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ reference: response.reference })
+  });
+
 
     const verifyData = await verifyRes.json();
 
