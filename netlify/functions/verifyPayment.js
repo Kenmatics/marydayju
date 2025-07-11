@@ -1,10 +1,10 @@
-const fetch = require('node-fetch');
+const fetch = require("node-fetch");
 
 exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
+      body: JSON.stringify({ error: "Method not allowed" }),
     };
   }
 
@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
   if (!reference) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Missing payment reference' }),
+      body: JSON.stringify({ error: "Missing payment reference" }),
     };
   }
 
@@ -21,36 +21,27 @@ exports.handler = async (event, context) => {
     const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     const data = await response.json();
 
-    if (data.status && data.data.status === 'success') {
+    if (data.status && data.data.status === "success") {
       return {
         statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          data: data.data,
-        }),
+        body: JSON.stringify({ status: true, data: data.data }),
       };
     } else {
       return {
         statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: data.message || 'Payment not successful',
-        }),
+        body: JSON.stringify({ status: false, error: data.message }),
       };
     }
-  } catch (error) {
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: 'Server error',
-      }),
+      body: JSON.stringify({ status: false, error: "Server error" }),
     };
   }
 };
