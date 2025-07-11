@@ -176,17 +176,18 @@ const verifyAndSavePayment = async (response, reference) => {
     await updateDoc(userRef, { lastRef: reference });
 
     const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ reference: response.reference })
-  });
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference: response.reference }),
+    });
+
 
 
     const verifyData = await verifyRes.json();
 
-    if (verifyData.status && verifyData.data.status === "success") {
+    if (verifyData.success && verifyData.data?.status === "success")  {
+      console.log("✅ verifyData:", verifyData);
+      
       const userSnap = await getDoc(userRef);
       const userData = userSnap.data();
 
