@@ -175,11 +175,12 @@ const verifyAndSavePayment = async (response, reference) => {
     // Save the reference before verification
     await updateDoc(userRef, { lastRef: reference });
 
-    const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
+    const verifyRes = await fetch("/api/verifyPayment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reference: response.reference }),
     });
+    // console.log("✅ verifyRes:", verifyRes);  
 
 
 
@@ -187,7 +188,7 @@ const verifyAndSavePayment = async (response, reference) => {
 
     if (verifyData.success && verifyData.data?.status === "success")  {
       console.log("✅ verifyData:", verifyData);
-      
+
       const userSnap = await getDoc(userRef);
       const userData = userSnap.data();
 
