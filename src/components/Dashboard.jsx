@@ -16,20 +16,12 @@ function Dashboard({ onLogout, userName, userId }) {
   const [cashedOut, setCashedOut] = useState(false);
   const [lockedGrids, setLockedGrids] = useState({});
 
-
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 
   const auth = getAuth();
   const user = auth.currentUser;
-
-//   if (user) {
-//   const userDocRef = doc(db, "users", user.uid);
-//   await updateDoc(userDocRef, {
-//     selectedPackage: "daily", // or whatever value you're updating
-//   });
-// }
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -65,14 +57,11 @@ function Dashboard({ onLogout, userName, userId }) {
   const handlePackageChange = async (event) => {
     const selected = event.target.value;
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-  
       if (!user) {
         console.error("No user is logged in.");
         return;
       }
-  
+
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, { selectedPackage: selected });
       setSelectedPackage(selected);
@@ -80,7 +69,6 @@ function Dashboard({ onLogout, userName, userId }) {
       console.error('Error updating selected package:', error);
     }
   };
-  
 
   const handleAmountChange = async (e) => {
     const value = e.target.value;
@@ -108,10 +96,10 @@ function Dashboard({ onLogout, userName, userId }) {
   };
 
   const handleProceed = () => {
-    if (step === 1 && selectedPackage !== '' && selectedPackage !== 'cooperative') {
+    if (step === 1 && selectedPackage && selectedPackage !== 'cooperative') {
       setStep(2);
     } else if (step === 2) {
-      const amount = Number(contributionAmount);
+      const amount = Number(contributionAmount.toString().trim());
       if (!amount || amount < 500) {
         alert("⚠️ Minimum contribution amount is ₦500");
         return;
@@ -123,113 +111,104 @@ function Dashboard({ onLogout, userName, userId }) {
   const calculateTotal = () => {
     return Object.entries(checkedDays)
       .filter(([key, value]) => value && key.startsWith(selectedPackage) && !paidDays[key])
-      .length * Number(contributionAmount);
+      .length * Number(contributionAmount.toString().trim());
   };
 
   const handlePaystackPayment = () => {
-  const totalAmount = calculateTotal() * 100;
-
-  if (!totalAmount) return alert("Please select contributions to pay for.");
-  if (!window.PaystackPop?.setup) {
-    alert("⚠️ Paystack script is not loaded.");
-    return;
-  }
-
-  const safeEmail = userName?.trim()
-    ? `${userName.trim().replace(/\s+/g, '').toLowerCase()}@marydayju.com`
-    : `guest${Date.now()}@marydayju.com`;
-
-  const reference = `${selectedPackage}-${Date.now()}`;
-
-  const handler = window.PaystackPop.setup({
-    key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-    email: safeEmail,
-    amount: totalAmount,
-    ref: reference,
-    currency: "NGN",
-    metadata: {
-      custom_fields: [
-        {
-          display_name: "Contributor Name",
-          variable_name: "contributor_name",
-          value: userName || 'Anonymous',
-        },
-      ],
-    },
-    callback: function (response) {
-      console.log("Payment complete:", response);
-      verifyAndSavePayment(response, reference);
-    },
-    onClose: function () {
-      alert("Transaction was cancelled.");
+    const totalAmount = calculateTotal() * 100;
+    if (!totalAmount) return alert("Please select contributions to pay for.");
+    if (!window.PaystackPop?.setup) {
+      alert("⚠️ Paystack script is not loaded.");
+      return;
     }
-  });
 
-  handler.openIframe();
-};
+    const safeEmail = userName?.trim()
+      ? `${userName.trim().replace(/\s+/g, '').toLowerCase()}@marydayju.com`
+      : `guest${Date.now()}@marydayju.com`;
 
-const verifyAndSavePayment = async (response, reference) => {
-  try {
-    const userRef = doc(db, 'users', userId);
+    const reference = `${selectedPackage}-${Date.now()}`;
 
-    // Save the reference before verification
-    await updateDoc(userRef, { lastRef: reference });
-
-    const verifyRes = await fetch("/api/verifyPayment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference: response.reference }),
+    const handler = window.PaystackPop.setup({
+      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+      email: safeEmail,
+      amount: totalAmount,
+      ref: reference,
+      currency: "NGN",
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Contributor Name",
+            variable_name: "contributor_name",
+            value: userName || 'Anonymous',
+          },
+        ],
+      },
+      callback: function (response) {
+        console.log("Payment complete:", response);
+        verifyAndSavePayment(reference); // ✅ Use generated reference
+      },
+      onClose: function () {
+        alert("Transaction was cancelled.");
+      }
     });
-    // console.log("✅ verifyRes:", verifyRes);  
 
+    handler.openIframe();
+  };
 
+  const verifyAndSavePayment = async (reference) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, { lastRef: reference });
 
-    const verifyData = await verifyRes.json();
-
-    if (verifyData.success && verifyData.data?.status === "success")  {
-      console.log("✅ verifyData:", verifyData);
-
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.data();
-
-      const newPaidDays = { ...userData.paidDays };
-      const selectedGrid = [];
-      const checked = userData.checkedDays || {};
-      const newlyPaid = {};
-
-      Object.entries(checked).forEach(([key, value], index) => {
-        if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
-          newPaidDays[key] = true;
-          newlyPaid[key] = true;
-          selectedGrid[index] = true;
-        } else {
-          selectedGrid[index] = selectedGrid[index] || false;
-        }
+      const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference }), // ✅ use our generated reference
       });
 
-      const contributionAmount = Number(userData.contributionAmount || 0);
-      const totalPaid = Object.keys(newlyPaid).length * contributionAmount;
+      const verifyData = await verifyRes.json();
 
-      await updateDoc(userRef, {
-        paidDays: newPaidDays,
-        amountContributed: (userData.amountContributed || 0) + totalPaid,
-        selectedGrid,
-        lastRef: reference,
-      });
+      if (verifyData.success && verifyData.data?.status === "success") {
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data();
 
-      setPaidDays(newPaidDays);
-      setAmountContributed((userData.amountContributed || 0) + totalPaid);
-      alert("✅ Payment verified and saved!");
-    } else {
-      alert("❌ Payment verification failed. Please contact support.");
-      console.error("Verification error:", verifyData.message);
+        const newPaidDays = { ...userData.paidDays };
+        const selectedGrid = [];
+        const checked = userData.checkedDays || {};
+        const newlyPaid = {};
+
+        Object.entries(checked).forEach(([key, value], index) => {
+          if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
+            newPaidDays[key] = true;
+            newlyPaid[key] = true;
+            selectedGrid[index] = true;
+          } else {
+            selectedGrid[index] = selectedGrid[index] || false;
+          }
+        });
+
+        const contributionAmount = Number(userData.contributionAmount.toString().trim() || 0);
+        const totalPaid = Object.keys(newlyPaid).length * contributionAmount;
+
+        await updateDoc(userRef, {
+          paidDays: newPaidDays,
+          amountContributed: (userData.amountContributed || 0) + totalPaid,
+          selectedGrid,
+          lastRef: reference,
+        });
+
+        setPaidDays(newPaidDays);
+        setAmountContributed((userData.amountContributed || 0) + totalPaid);
+        alert("✅ Payment verified and saved!");
+      } else {
+        alert("❌ Payment verification failed. Please wait or contact support.");
+        console.error("Verification error:", verifyData.message);
+      }
+    } catch (err) {
+      console.error("❌ Error verifying Paystack payment:", err);
+      alert("❌ Could not verify payment. Please try again shortly.");
     }
-  } catch (err) {
-    console.error("❌ Error verifying Paystack payment:", err);
-    alert("❌ An error occurred during payment verification.");
-  }
-};
-
+  };
 
   useEffect(() => {
     const updateTotal = async () => {
@@ -247,7 +226,7 @@ const verifyAndSavePayment = async (response, reference) => {
 
   const renderGrid = () => {
     const getBoxClass = (isPaid, isChecked, isLocked) => {
-      return `${isLocked ? 'locked' : isPaid ? 'paid' : isChecked ? 'selected' : ''} ${cashedOut ? 'cashedOut' : ''}`;    
+      return `${isLocked ? 'locked' : isPaid ? 'paid' : isChecked ? 'selected' : ''} ${cashedOut ? 'cashedOut' : ''}`;
     };
 
     if (selectedPackage === 'daily') {
@@ -273,7 +252,7 @@ const verifyAndSavePayment = async (response, reference) => {
                     >
                       <input type="checkbox" checked={checkedDays[key] || false} readOnly />
                     </div>
-                  );                  
+                  );
                 })}
               </div>
             ))}
@@ -296,7 +275,7 @@ const verifyAndSavePayment = async (response, reference) => {
               <div key={week} className={styles.gridRow}>
                 <div className={styles.dayLabel}>{week}</div>
                 {months.map(month => {
-                  const key = `${selectedPackage}-${month}-${week}`;
+                  const key = `weekly-${month}-${week}`;
                   return (
                     <div
                       key={key}
@@ -305,7 +284,7 @@ const verifyAndSavePayment = async (response, reference) => {
                     >
                       <input type="checkbox" checked={checkedDays[key] || false} readOnly />
                     </div>
-                  );                  
+                  );
                 })}
               </div>
             ))}
@@ -327,12 +306,12 @@ const verifyAndSavePayment = async (response, reference) => {
             </div>
             <div className={styles.gridRow}>
               {months.map(month => {
-                const key = `${selectedPackage}-${month}`;
+                const key = `monthly-${month}`;
                 return (
                   <div
                     key={key}
                     className={`${styles.gridCell} ${getBoxClass(paidDays[key], checkedDays[key], lockedGrids[key])}`}
-                    onClick={() => handleCheckboxChange(month, '')} // fix: pass label as empty string
+                    onClick={() => handleCheckboxChange(month, '')}
                   >
                     <input type="checkbox" checked={checkedDays[key] || false} readOnly />
                   </div>
@@ -391,7 +370,7 @@ const verifyAndSavePayment = async (response, reference) => {
       {step === 2 && (
         <div>
           <label htmlFor="amount" className={styles.welcomeText}>Contribution amount</label>
-          <input type="number" id="amount" value={contributionAmount}  min={500} onChange={handleAmountChange} placeholder="Enter amount (₦500 minimum)" />
+          <input type="number" id="amount" value={contributionAmount} min={500} onChange={handleAmountChange} placeholder="Enter amount (₦500 minimum)" />
           <button className={styles.primaryBtn} onClick={handleProceed}>Proceed</button>
         </div>
       )}
@@ -420,7 +399,7 @@ const verifyAndSavePayment = async (response, reference) => {
           </div>
         </div>
       )}
-      <button className={styles.primaryBtn} onClick={onLogout} >Logout</button>
+      <button className={styles.primaryBtn} onClick={onLogout}>Logout</button>
     </div>
   );
 }
