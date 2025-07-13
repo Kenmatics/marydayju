@@ -1,4 +1,6 @@
 exports.handler = async (event, context) => {
+  console.log("🚀 Event received:", event);
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -7,6 +9,8 @@ exports.handler = async (event, context) => {
   }
 
   const { reference } = JSON.parse(event.body);
+  console.log("🧾 Verifying reference:", reference);
+
   if (!reference) {
     return {
       statusCode: 400,
@@ -23,7 +27,7 @@ exports.handler = async (event, context) => {
     });
 
     const data = await response.json();
-    console.log("✅ Paystack Response:", JSON.stringify(data));
+    console.log("✅ Paystack response data:", JSON.stringify(data));
 
     if (data.status && data.data?.status === 'success') {
       return {
@@ -34,22 +38,23 @@ exports.handler = async (event, context) => {
         }),
       };
     } else {
+      console.error("❌ Verification failed:", data.message);
       return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
           error: data.message || 'Payment not successful',
-          data: data.data || null
+          data: data.data || null,
         }),
       };
     }
   } catch (error) {
-    console.error("❌ Server Error:", error);
+    console.error("❌ Server error:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
-        error: 'Server error',
+        error: 'Server error while verifying payment',
       }),
     };
   }

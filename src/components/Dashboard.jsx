@@ -160,7 +160,7 @@ function Dashboard({ onLogout, userName, userId }) {
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, { lastRef: reference });
 
-      const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
+      const verifyRes = await fetch("./netlify/functions/verifyPayment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reference }), // ✅ use our generated reference
