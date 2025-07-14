@@ -158,8 +158,8 @@ function Dashboard({ onLogout, userName, userId }) {
   const verifyAndSavePayment = async (reference) => {
     try {
       console.log("Sending reference to server:", reference); // ✅ confirm here
-      // const userRef = doc(db, 'users', userId);
-      // await updateDoc(userRef, { lastRef: reference });
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, { lastRef: reference });
 
       const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
         method: "POST",
