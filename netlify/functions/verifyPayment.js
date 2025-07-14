@@ -1,6 +1,12 @@
-// netlify/functions/verifyPayment.js
 export async function handler(event, context) {
   try {
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: 'Method Not Allowed' }),
+      };
+    }
+
     const body = JSON.parse(event.body);
     const reference = body.reference;
 
