@@ -157,8 +157,9 @@ function Dashboard({ onLogout, userName, userId }) {
 
   const verifyAndSavePayment = async (reference) => {
     try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, { lastRef: reference });
+      console.log("Sending reference to server:", reference); // ✅ confirm here
+      // const userRef = doc(db, 'users', userId);
+      // await updateDoc(userRef, { lastRef: reference });
 
       const verifyRes = await fetch("/.netlify/functions/verifyPayment", {
         method: "POST",
@@ -167,6 +168,7 @@ function Dashboard({ onLogout, userName, userId }) {
       });
 
       const verifyData = await verifyRes.json();
+      console.log("Verification response:", verifyData); // ✅ log for debugging
 
       if (verifyData.success && verifyData.data?.status === "success") {
         const userSnap = await getDoc(userRef);

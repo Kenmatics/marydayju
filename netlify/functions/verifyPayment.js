@@ -1,14 +1,7 @@
+// netlify/functions/verifyPayment.js
 export async function handler(event, context) {
   try {
-    if (event.httpMethod !== 'POST') {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: 'Method Not Allowed' }),
-      };
-    }
-
-    const body = JSON.parse(event.body);
-    const reference = body.reference;
+    const { reference } = JSON.parse(event.body || '{}');
 
     if (!reference) {
       return {
@@ -20,7 +13,6 @@ export async function handler(event, context) {
     const paystackSecret = process.env.VITE_PAYSTACK_SECRET_KEY;
 
     const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-      method: 'GET',
       headers: {
         Authorization: `Bearer ${paystackSecret}`,
         'Content-Type': 'application/json',
@@ -32,12 +24,12 @@ export async function handler(event, context) {
     if (result.status && result.data.status === 'success') {
       return {
         statusCode: 200,
-        body: JSON.stringify({ verified: true, data: result.data }),
+        body: JSON.stringify({ success: true, data: result.data }),
       };
     } else {
       return {
         statusCode: 400,
-        body: JSON.stringify({ verified: false, error: 'Verification failed' }),
+        body: JSON.stringify({ success: false, error: 'Verification failed' }),
       };
     }
   } catch (error) {
