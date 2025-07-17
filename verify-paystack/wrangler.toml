@@ -3,4 +3,4 @@ main = "src/index.js"
 compatibility_date = "2025-07-15"
 
 [vars]
-PAYSTACK_SECRET_KEY = "sk_live_33842106de55d4d2c0e7480229edba7a73d38c08" # Replace with your real key later
+
