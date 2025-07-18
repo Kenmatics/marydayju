@@ -6,12 +6,8 @@ export default {
       "Access-Control-Allow-Headers": "Content-Type",
     };
 
-    // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
 
     if (request.method !== "POST") {
@@ -31,7 +27,7 @@ export default {
         });
       }
 
-      const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}`,
@@ -41,19 +37,31 @@ export default {
 
       const data = await res.json();
 
-      if (data.status && data.data.status === "success") {
+      if (!data || !data.status) {
+        return new Response(JSON.stringify({ success: false, error: "Empty or invalid response from Paystack" }), {
+          status: 500,
+          headers: corsHeaders,
+        });
+      }
+
+      if (data.data && data.data.status.toLowerCase() === "success") {
         return new Response(JSON.stringify({ success: true, data: data.data }), {
           status: 200,
           headers: corsHeaders,
         });
       } else {
-        return new Response(JSON.stringify({ success: false, error: "Verification failed" }), {
+        return new Response(JSON.stringify({
+          success: false,
+          error: "Verification failed",
+          paystackMessage: data.data?.gateway_response || data.message || "Unknown"
+        }), {
           status: 400,
           headers: corsHeaders,
         });
       }
+
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
+      return new Response(JSON.stringify({ success: false, error: err.message }), {
         status: 500,
         headers: corsHeaders,
       });
