@@ -100,7 +100,7 @@ function Dashboard({ onLogout, userName, userId }) {
       setStep(2);
     } else if (step === 2) {
       const amount = Number(contributionAmount.toString().trim());
-      if (!amount || amount < 100) {
+      if (!amount || amount < 10) {
         alert("⚠️ Minimum contribution amount is ₦500");
         return;
       }

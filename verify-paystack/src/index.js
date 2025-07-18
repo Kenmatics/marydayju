@@ -31,19 +31,18 @@ export default {
         });
       }
 
-      const paystackSecret = env.PAYSTACK_SECRET_KEY;
-
       const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+        method: "GET",
         headers: {
-          Authorization: `Bearer ${paystackSecret}`,
+          Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}`,
           "Content-Type": "application/json",
         },
       });
 
-      const result = await res.json();
+      const data = await res.json();
 
-      if (result.status && result.data.status === "success") {
-        return new Response(JSON.stringify({ success: true, data: result.data }), {
+      if (data.status && data.data.status === "success") {
+        return new Response(JSON.stringify({ success: true, data: data.data }), {
           status: 200,
           headers: corsHeaders,
         });
