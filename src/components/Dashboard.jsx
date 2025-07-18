@@ -161,10 +161,20 @@ function Dashboard({ onLogout, userName, userId }) {
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, { lastRef: reference });
 
-      const verifyRes = await fetch("https://verify-paystack.kenmaticssolutionservices.workers.dev", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference }),
+      const verifyRes = await fetch("https://verify-paystack.kenmaticssolutionservices.workers.dev/", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reference: response.reference }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Show success message
+        } else {
+          // Show error message: could not verify
+        }
       });
 
       const verifyData = await verifyRes.json();
