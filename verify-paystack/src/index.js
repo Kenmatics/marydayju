@@ -35,10 +35,29 @@ export default {
         },
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        const text = await res.text(); // get raw body if not JSON
+        return new Response(JSON.stringify({
+          success: false,
+          error: "Paystack response was not JSON",
+          statusCode: res.status,
+          raw: text,
+        }), {
+          status: 500,
+          headers: corsHeaders,
+        });
+      }
 
       if (!data || !data.status) {
-        return new Response(JSON.stringify({ success: false, error: "Empty or invalid response from Paystack" }), {
+        return new Response(JSON.stringify({
+          success: false,
+          error: "Empty or invalid response from Paystack",
+          statusCode: res.status,
+          paystackResponse: data
+        }), {
           status: 500,
           headers: corsHeaders,
         });
@@ -53,7 +72,8 @@ export default {
         return new Response(JSON.stringify({
           success: false,
           error: "Verification failed",
-          paystackMessage: data.data?.gateway_response || data.message || "Unknown"
+          paystackMessage: data.data?.gateway_response || data.message || "Unknown",
+          statusCode: res.status
         }), {
           status: 400,
           headers: corsHeaders,
@@ -61,7 +81,11 @@ export default {
       }
 
     } catch (err) {
-      return new Response(JSON.stringify({ success: false, error: err.message }), {
+      return new Response(JSON.stringify({
+        success: false,
+        error: err.message || "Unknown error",
+        stack: err.stack,
+      }), {
         status: 500,
         headers: corsHeaders,
       });
