@@ -145,8 +145,9 @@ function Dashboard({ onLogout, userName, userId }) {
       },
       callback: function (response) {
         console.log("Payment complete:", response);
-        verifyAndSavePayment(reference); // ✅ Use generated reference
+        verifyAndSavePayment(response.reference); // ✅ Fixed here
       },
+
       onClose: function () {
         alert("Transaction was cancelled.");
       }
@@ -156,71 +157,60 @@ function Dashboard({ onLogout, userName, userId }) {
   };
 
   const verifyAndSavePayment = async (reference) => {
-    try {
-      console.log("Sending reference to server:", reference); // ✅ confirm here
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, { lastRef: reference });
+  try {
+    const userRef = doc(db, 'users', userId);
 
-      const verifyRes = await fetch("https://verify-paystack.kenmaticssolutionservices.workers.dev/", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reference: response.reference }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          // Show success message
+    const res = await fetch("https://verify-paystack.kenmaticssolutionservices.workers.dev/", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference }), // ✅ Correct usage
+    });
+
+    const verifyData = await res.json();
+    console.log("Verification response:", verifyData);
+
+    if (verifyData.success && verifyData.data?.status === "success") {
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.data();
+
+      const newPaidDays = { ...userData.paidDays };
+      const selectedGrid = [];
+      const checked = userData.checkedDays || {};
+      const newlyPaid = {};
+
+      Object.entries(checked).forEach(([key, value], index) => {
+        if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
+          newPaidDays[key] = true;
+          newlyPaid[key] = true;
+          selectedGrid[index] = true;
         } else {
-          // Show error message: could not verify
+          selectedGrid[index] = selectedGrid[index] || false;
         }
       });
 
-      const verifyData = await verifyRes.json();
-      console.log("Verification response:", verifyData); // ✅ log for debugging
+      const contributionAmount = Number(userData.contributionAmount.toString().trim() || 0);
+      const totalPaid = Object.keys(newlyPaid).length * contributionAmount;
 
-      if (verifyData.success && verifyData.data?.status === "success") {
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.data();
+      await updateDoc(userRef, {
+        paidDays: newPaidDays,
+        amountContributed: (userData.amountContributed || 0) + totalPaid,
+        selectedGrid,
+        lastRef: reference,
+      });
 
-        const newPaidDays = { ...userData.paidDays };
-        const selectedGrid = [];
-        const checked = userData.checkedDays || {};
-        const newlyPaid = {};
-
-        Object.entries(checked).forEach(([key, value], index) => {
-          if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
-            newPaidDays[key] = true;
-            newlyPaid[key] = true;
-            selectedGrid[index] = true;
-          } else {
-            selectedGrid[index] = selectedGrid[index] || false;
-          }
-        });
-
-        const contributionAmount = Number(userData.contributionAmount.toString().trim() || 0);
-        const totalPaid = Object.keys(newlyPaid).length * contributionAmount;
-
-        await updateDoc(userRef, {
-          paidDays: newPaidDays,
-          amountContributed: (userData.amountContributed || 0) + totalPaid,
-          selectedGrid,
-          lastRef: reference,
-        });
-
-        setPaidDays(newPaidDays);
-        setAmountContributed((userData.amountContributed || 0) + totalPaid);
-        alert("✅ Payment verified and saved!");
-      } else {
-        alert("❌ Payment verification failed. Please wait or contact support.");
-        console.error("Verification error:", verifyData.message);
-      }
-    } catch (err) {
-      console.error("❌ Error verifying Paystack payment:", err);
-      alert("❌ Could not verify payment. Please try again shortly.");
+      setPaidDays(newPaidDays);
+      setAmountContributed((userData.amountContributed || 0) + totalPaid);
+      alert("✅ Payment verified and saved!");
+    } else {
+      alert("❌ Payment verification failed. Please wait or contact support.");
+      console.error("Verification error:", verifyData.message);
     }
-  };
+  } catch (err) {
+    console.error("❌ Error verifying Paystack payment:", err);
+    alert("❌ Could not verify payment. Please try again shortly.");
+  }
+};
+
 
   useEffect(() => {
     const updateTotal = async () => {
