@@ -27,7 +27,7 @@ export default {
         });
       }
 
-      const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}`,
