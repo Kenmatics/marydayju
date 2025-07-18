@@ -1,5 +1,8 @@
 export default {
   async fetch(request, env, ctx) {
+    // ✅ This is the correct place to log the env value
+    console.log("Using PAYSTACK_SECRET_KEY:", env.PAYSTACK_SECRET_KEY);
+
     const corsHeaders = {
       "Access-Control-Allow-Origin": "https://marydayjuenterprise.com",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -39,7 +42,7 @@ export default {
       try {
         data = await res.json();
       } catch (jsonError) {
-        const text = await res.text(); // get raw body if not JSON
+        const text = await res.text();
         return new Response(JSON.stringify({
           success: false,
           error: "Paystack response was not JSON",
@@ -47,6 +50,17 @@ export default {
           raw: text,
         }), {
           status: 500,
+          headers: corsHeaders,
+        });
+      }
+
+      if (res.status === 401) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: "Unauthorized. Check PAYSTACK_SECRET_KEY",
+          statusCode: 401,
+        }), {
+          status: 401,
           headers: corsHeaders,
         });
       }
