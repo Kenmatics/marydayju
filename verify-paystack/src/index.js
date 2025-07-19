@@ -1,7 +1,6 @@
 export default {
   async fetch(request, env, ctx) {
-    // ✅ This is the correct place to log the env value
-    console.log("Using PAYSTACK_SECRET_KEY:", env.PAYSTACK_SECRET_KEY);
+    // console.log("Using PAYSTACK_SECRET_KEY:", env.PAYSTACK_SECRET_KEY);
 
     const corsHeaders = {
       "Access-Control-Allow-Origin": "https://marydayjuenterprise.com",
