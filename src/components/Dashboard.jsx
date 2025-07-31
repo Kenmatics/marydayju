@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import styles from './Dashboard.module.css';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
+const INITIATE_WORKER_URL = " https://squad-init.kenmaticssolutionservices.workers.dev/";
+const VERIFY_WORKER_URL = "https://squad-verify.kenmaticssolutionservices.workers.dev/";
 function Dashboard({ onLogout, userName, userId }) {
   const [step, setStep] = useState(1);
   const [selectedPackage, setSelectedPackage] = useState('');
@@ -15,6 +17,8 @@ function Dashboard({ onLogout, userName, userId }) {
   const [showUnavailableMsg, setShowUnavailableMsg] = useState(false);
   const [cashedOut, setCashedOut] = useState(false);
   const [lockedGrids, setLockedGrids] = useState({});
+  const [verifying, setVerifying] = useState(false);
+  const alreadyVerifiedRef = useRef(false); // to avoid double verify race
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -53,6 +57,21 @@ function Dashboard({ onLogout, userName, userId }) {
 
     fetchUserData();
   }, [userId]);
+
+  // On return from Squad after payment: ?transaction_ref=...
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const transactionRef = params.get('transaction_ref');
+    if (transactionRef && !alreadyVerifiedRef.current) {
+      alreadyVerifiedRef.current = true; // prevent double
+      // Clean URL so it doesn't re-trigger on reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('transaction_ref');
+      window.history.replaceState({}, '', url.toString());
+      verifyAndSavePayment(transactionRef);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, selectedPackage, contributionAmount, checkedDays, paidDays]);
 
   const handlePackageChange = async (event) => {
     const selected = event.target.value;
@@ -114,103 +133,107 @@ function Dashboard({ onLogout, userName, userId }) {
       .length * Number(contributionAmount.toString().trim());
   };
 
-  const handlePaystackPayment = () => {
-    const totalAmount = calculateTotal() * 100;
+  const initiateSquadPayment = async () => {
+    const totalAmount = calculateTotal(); // in Naira
     if (!totalAmount) return alert("Please select contributions to pay for.");
-    if (!window.PaystackPop?.setup) {
-      alert("⚠️ Paystack script is not loaded.");
-      return;
-    }
+    if (!userId) return alert("User not ready yet.");
+
+    const transaction_ref = `${selectedPackage}-${Date.now()}`;
 
     const safeEmail = userName?.trim()
       ? `${userName.trim().replace(/\s+/g, '').toLowerCase()}@marydayju.com`
       : `guest${Date.now()}@marydayju.com`;
 
-    const reference = `${selectedPackage}-${Date.now()}`;
-
-    const handler = window.PaystackPop.setup({
-      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-      email: safeEmail,
-      amount: totalAmount,
-      ref: reference,
-      currency: "NGN",
-      metadata: {
-        custom_fields: [
-          {
-            display_name: "Contributor Name",
-            variable_name: "contributor_name",
-            value: userName || 'Anonymous',
+    try {
+      const resp = await fetch(INITIATE_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totalAmount, // Naira, worker will convert to lowest unit
+          email: safeEmail,
+          transaction_ref,
+          callback_url: `${window.location.origin}/contribution?transaction_ref=${transaction_ref}`,
+          currency: 'NGN',
+          metadata: {
+            contributor: userName || 'Anonymous',
+            userId,
           },
-        ],
-      },
-      callback: function (response) {
-        console.log("Payment complete:", response);
-        verifyAndSavePayment(response.reference); // ✅ Fixed here
-      },
+        }),
+      });
 
-      onClose: function () {
-        alert("Transaction was cancelled.");
+      const data = await resp.json();
+      if (data.success && data.checkout_url) {
+        // Redirect to Squad checkout page
+        window.location.href = data.checkout_url;
+      } else {
+        console.error('Squad initiation failed:', data);
+        alert('Failed to start payment. Please try again.');  
       }
-    });
-
-    handler.openIframe();
+    } catch (err) {
+      console.error('Error initiating Squad payment:', err);
+      alert('Could not initiate payment.');
+    }
   };
 
-  const verifyAndSavePayment = async (reference) => {
-  try {
-    const userRef = doc(db, 'users', userId);
+  const verifyAndSavePayment = async (transactionRef) => {
+    if (verifying) return;
+    setVerifying(true);
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, { lastRef: transactionRef });
 
-    const res = await fetch("https://verify-paystack.kenmaticssolutionservices.workers.dev/", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reference }), // ✅ Correct usage
-    });
-
-    const verifyData = await res.json();
-    console.log("Verification response:", verifyData);
-
-    if (verifyData.success && verifyData.data?.status === "success") {
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.data();
-
-      const newPaidDays = { ...userData.paidDays };
-      const selectedGrid = [];
-      const checked = userData.checkedDays || {};
-      const newlyPaid = {};
-
-      Object.entries(checked).forEach(([key, value], index) => {
-        if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
-          newPaidDays[key] = true;
-          newlyPaid[key] = true;
-          selectedGrid[index] = true;
-        } else {
-          selectedGrid[index] = selectedGrid[index] || false;
-        }
+      const res = await fetch(VERIFY_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transaction_ref: transactionRef }),
       });
 
-      const contributionAmount = Number(userData.contributionAmount.toString().trim() || 0);
-      const totalPaid = Object.keys(newlyPaid).length * contributionAmount;
+      const verifyData = await res.json();
+      console.log('Verification response:', verifyData);
 
-      await updateDoc(userRef, {
-        paidDays: newPaidDays,
-        amountContributed: (userData.amountContributed || 0) + totalPaid,
-        selectedGrid,
-        lastRef: reference,
-      });
+      if (verifyData.success && verifyData.data?.transaction_status?.toLowerCase() === 'success') {
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data();
 
-      setPaidDays(newPaidDays);
-      setAmountContributed((userData.amountContributed || 0) + totalPaid);
-      alert("✅ Payment verified and saved!");
-    } else {
-      alert("❌ Payment verification failed. Please wait or contact support.");
-      console.error("Verification error:", verifyData.message);
+        const newPaidDays = { ...userData.paidDays };
+        const selectedGrid = [];
+        const checked = userData.checkedDays || {};
+        const newlyPaid = {};
+
+        Object.entries(checked).forEach(([key, value], index) => {
+          if (value && key.startsWith(selectedPackage) && !newPaidDays[key]) {
+            newPaidDays[key] = true;
+            newlyPaid[key] = true;
+            selectedGrid[index] = true;
+          } else {
+            selectedGrid[index] = selectedGrid[index] || false;
+          }
+        });
+
+        const contributionAmountNum = Number(userData.contributionAmount.toString().trim() || 0);
+        const totalPaid = Object.keys(newlyPaid).length * contributionAmountNum;
+
+        await updateDoc(userRef, {
+          paidDays: newPaidDays,
+          amountContributed: (userData.amountContributed || 0) + totalPaid,
+          selectedGrid,
+          lastRef: transactionRef,
+        });
+
+        setPaidDays(newPaidDays);
+        setAmountContributed((userData.amountContributed || 0) + totalPaid);
+        alert('✅ Payment verified and saved!');
+      } else {
+        alert('❌ Payment verification failed. Please wait or contact support.');
+        console.error('Verification error:', verifyData);
+      }
+    } catch (err) {
+      console.error('❌ Error verifying Squad payment:', err);
+      alert('❌ Could not verify payment. Please try again shortly.');
+    } finally {
+      setVerifying(false);
     }
-  } catch (err) {
-    console.error("❌ Error verifying Paystack payment:", err);
-    alert("❌ Could not verify payment. Please try again shortly.");
-  }
-};
-
+  };
 
   useEffect(() => {
     const updateTotal = async () => {
@@ -332,9 +355,9 @@ function Dashboard({ onLogout, userName, userId }) {
     try {
       await updateDoc(doc(db, 'users', userId), { checkedDays: {} });
       setCheckedDays({});
-      alert("✅ Contribution reset!");
+      alert('✅ Contribution reset!');
     } catch (error) {
-      console.error("Error resetting:", error);
+      console.error('Error resetting:', error);
     }
   };
 
@@ -380,7 +403,9 @@ function Dashboard({ onLogout, userName, userId }) {
       {step === 3 && (
         <div>
           {renderGrid()}
-          <button className={styles.primaryBtn} onClick={handlePaystackPayment} disabled={!calculateTotal()}>Proceed to Payment</button>
+          <button className={styles.primaryBtn} onClick={initiateSquadPayment} disabled={!calculateTotal() || verifying}>
+            {verifying ? 'Verifying...' : 'Proceed to Payment'}
+          </button>
 
           {cashedOut && (
             <div className={styles.cashoutBanner}>
